@@ -1,12 +1,182 @@
+cat > index.html << 'EOF'
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>내 첫 웹페이지</title>
+    <title>Hello World!</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        @import url('https://fonts.cdnfonts.com/css/hack');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Hack', 'Noto Sans KR', monospace;
+            background-color: #000000;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 50px;
+            border-bottom: 1px solid #333;
+        }
+        
+        .logo {
+            color: #5db2fd;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+        
+        .login-btn {
+            background-color: transparent;
+            color: #5db2fd;
+            border: 2px solid #5db2fd;
+            padding: 10px 30px;
+            font-family: 'Hack', monospace;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+        }
+        
+        .login-btn:hover {
+            background-color: #5db2fd;
+            color: #000000;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(93, 178, 253, 0.4);
+        }
+        
+        main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 50px;
+        }
+        
+        .hero {
+            text-align: center;
+            animation: fadeIn 1s ease-in;
+        }
+        
+        h1 {
+            font-size: 72px;
+            color: #5db2fd;
+            margin-bottom: 30px;
+            font-weight: 700;
+            text-shadow: 0 0 20px rgba(93, 178, 253, 0.5);
+            letter-spacing: 3px;
+        }
+        
+        .content-box {
+            background-color: #ffffff;
+            color: #000000;
+            padding: 60px 80px;
+            border-radius: 10px;
+            margin-top: 40px;
+            box-shadow: 0 10px 40px rgba(93, 178, 253, 0.2);
+            max-width: 800px;
+        }
+        
+        .content-box h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        aside {
+            position: fixed;
+            right: 50px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .menu-item {
+            writing-mode: vertical-rl;
+            color: #5db2fd;
+            font-size: 14px;
+            letter-spacing: 3px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 10px;
+        }
+        
+        .menu-item:hover {
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(93, 178, 253, 0.8);
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            header {
+                padding: 20px 30px;
+            }
+            
+            h1 {
+                font-size: 48px;
+            }
+            
+            .content-box {
+                padding: 40px 30px;
+            }
+            
+            aside {
+                display: none;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>안녕하세요!</h1>
-    <p>GitHub Pages로 만든 첫 웹페이지입니다.</p>
+    <header>
+        <div class="logo">main</div>
+        <button class="login-btn">로그인 하는 곳</button>
+    </header>
+    
+    <main>
+        <div class="hero">
+            <h1>Hello World!</h1>
+            <div class="content-box">
+                <h2>&lt;여기 달력&gt;</h2>
+            </div>
+        </div>
+    </main>
+    
+    <aside>
+        <nav class="menu">
+            <div class="menu-item">이쪽에 메뉴</div>
+            <div class="menu-item">+ 메뉴바</div>
+        </nav>
+    </aside>
 </body>
 </html>
+EOF
