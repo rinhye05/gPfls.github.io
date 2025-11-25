@@ -40,6 +40,21 @@
             letter-spacing: 2px;
         }
         
+        .header-center {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        h1 {
+            font-size: 48px;
+            color: #5db2fd;
+            font-weight: 700;
+            text-shadow: 0 0 20px rgba(93, 178, 253, 0.5);
+            letter-spacing: 3px;
+            margin: 0;
+        }
+        
         .login-btn {
             background-color: transparent;
             color: #5db2fd;
@@ -62,22 +77,9 @@
         main {
             flex: 1;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             padding: 50px;
-            gap: 30px;
-        }
-        
-        h1 {
-            font-size: 72px;
-            color: #5db2fd;
-            font-weight: 700;
-            text-shadow: 0 0 20px rgba(93, 178, 253, 0.5);
-            letter-spacing: 3px;
-            animation: fadeIn 1s ease-in;
-            text-align: center;
-            order: -1;
         }
         
         .content-box {
@@ -270,10 +272,19 @@
         @media (max-width: 768px) {
             header {
                 padding: 20px 30px;
+                flex-wrap: wrap;
+            }
+            
+            .header-center {
+                position: static;
+                transform: none;
+                width: 100%;
+                text-align: center;
+                margin-top: 15px;
             }
             
             h1 {
-                font-size: 48px;
+                font-size: 32px;
             }
             
             .content-box {
@@ -285,12 +296,13 @@
 <body>
     <header>
         <div class="logo">main</div>
+        <div class="header-center">
+            <h1>Hello World!</h1>
+        </div>
         <button class="login-btn" onclick="openModal()">login</button>
     </header>
     
     <main>
-        <h1>Hello World!</h1>
-        
         <div class="content-box">
             <div class="calendar">
                 <div class="calendar-header">
@@ -421,4 +433,3 @@
     </script>
 </body>
 </html>
-EOF
