@@ -85,8 +85,8 @@
         }
         
         .content-box {
-            background-color: #ffffff;
-            color: #000000;
+            background-color: #000000;
+            color: #ffffff;
             padding: 40px;
             border-radius: 10px;
             box-shadow: 0 10px 40px rgba(93, 178, 253, 0.2);
@@ -106,7 +106,7 @@
             align-items: center;
             margin-bottom: 20px;
             padding: 10px;
-            background-color: #f5f5f5;
+            background-color: #1a1a1a;
             border-radius: 5px;
         }
         
@@ -127,6 +127,7 @@
         .month-year {
             font-weight: 700;
             font-size: 18px;
+            color: #ffffff;
         }
         
         .calendar-grid {
@@ -147,11 +148,15 @@
         
         .day {
             text-align: center;
-            padding: 15px;
-            border: 1px solid #ddd;
+            padding: 15px 5px;
+            border: 1px solid #333;
             border-radius: 3px;
             cursor: pointer;
             transition: all 0.2s;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            position: relative;
+            min-height: 60px;
         }
         
         .day:hover {
@@ -167,7 +172,22 @@
         }
         
         .day.other-month {
-            color: #ccc;
+            color: #666;
+            background-color: #0a0a0a;
+        }
+        
+        .day.has-event {
+            border: 2px solid #5db2fd;
+        }
+        
+        .event-indicator {
+            display: block;
+            font-size: 10px;
+            color: #5db2fd;
+            margin-top: 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         
         /* 로그인 모달 */
@@ -189,7 +209,8 @@
         }
         
         .modal-content {
-            background-color: white;
+            background-color: #1a1a1a;
+            color: #ffffff;
             padding: 40px;
             border-radius: 10px;
             border: 3px solid #5db2fd;
@@ -209,22 +230,29 @@
         
         .form-group label {
             display: block;
-            color: #333;
+            color: #ffffff;
             margin-bottom: 5px;
             font-size: 14px;
         }
         
-        .form-group input {
+        .form-group input, .form-group textarea {
             width: 100%;
             padding: 10px;
-            border: 2px solid #ddd;
+            border: 2px solid #333;
             border-radius: 5px;
             font-family: 'Hack', monospace;
+            background-color: #0a0a0a;
+            color: #ffffff;
         }
         
-        .form-group input:focus {
+        .form-group input:focus, .form-group textarea:focus {
             outline: none;
             border-color: #5db2fd;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
         }
         
         .form-buttons {
@@ -232,7 +260,7 @@
             gap: 10px;
         }
         
-        .submit-btn, .cancel-btn {
+        .submit-btn, .cancel-btn, .delete-btn {
             flex: 1;
             padding: 12px;
             border: none;
@@ -252,12 +280,21 @@
         }
         
         .cancel-btn {
-            background-color: #ddd;
-            color: #333;
+            background-color: #333;
+            color: #ffffff;
         }
         
         .cancel-btn:hover {
-            background-color: #ccc;
+            background-color: #444;
+        }
+        
+        .delete-btn {
+            background-color: #ff4444;
+            color: white;
+        }
+        
+        .delete-btn:hover {
+            background-color: #cc0000;
         }
         
         @keyframes fadeIn {
@@ -300,7 +337,7 @@
             <h1>Hello World!</h1>
         </div>
         <div class="header-right">
-            <button class="login-btn" onclick="openModal()">login</button>
+            <button class="login-btn" onclick="openLoginModal()">login</button>
         </div>
     </header>
     
@@ -332,14 +369,37 @@
                 </div>
                 <div class="form-buttons">
                     <button type="submit" class="submit-btn">로그인</button>
-                    <button type="button" class="cancel-btn" onclick="closeModal()">취소</button>
+                    <button type="button" class="cancel-btn" onclick="closeModal('loginModal')">취소</button>
                 </div>
             </form>
         </div>
-    </main>
+    </div>
+    
+    <!-- 일정 추가/수정 모달 -->
+    <div class="modal" id="eventModal">
+        <div class="modal-content">
+            <h2 id="eventModalTitle">일정 추가</h2>
+            <form onsubmit="handleEvent(event)">
+                <div class="form-group">
+                    <label>날짜</label>
+                    <input type="text" id="eventDate" readonly>
+                </div>
+                <div class="form-group">
+                    <label>일정 내용</label>
+                    <textarea id="eventText" required></textarea>
+                </div>
+                <div class="form-buttons" id="eventButtons">
+                    <button type="submit" class="submit-btn">저장</button>
+                    <button type="button" class="cancel-btn" onclick="closeModal('eventModal')">취소</button>
+                </div>
+            </form>
+        </div>
+    </div>
     
     <script>
         let currentDate = new Date();
+        let events = JSON.parse(localStorage.getItem('calendarEvents')) || {};
+        let selectedDateKey = '';
         
         function renderCalendar() {
             const year = currentDate.getFullYear();
@@ -377,13 +437,23 @@
             for (let date = 1; date <= lastDate; date++) {
                 const dayElement = document.createElement('div');
                 dayElement.className = 'day';
-                dayElement.textContent = date;
+                
+                const dateKey = `${year}-${month + 1}-${date}`;
+                
+                dayElement.innerHTML = `<div>${date}</div>`;
+                
+                if (events[dateKey]) {
+                    dayElement.classList.add('has-event');
+                    dayElement.innerHTML += `<span class="event-indicator">${events[dateKey]}</span>`;
+                }
                 
                 if (year === today.getFullYear() && 
                     month === today.getMonth() && 
                     date === today.getDate()) {
                     dayElement.classList.add('today');
                 }
+                
+                dayElement.onclick = () => openEventModal(year, month + 1, date);
                 
                 grid.appendChild(dayElement);
             }
@@ -408,25 +478,78 @@
             renderCalendar();
         }
         
-        function openModal() {
+        function openLoginModal() {
             document.getElementById('loginModal').classList.add('active');
         }
         
-        function closeModal() {
-            document.getElementById('loginModal').classList.remove('active');
+        function openEventModal(year, month, date) {
+            selectedDateKey = `${year}-${month}-${date}`;
+            document.getElementById('eventDate').value = `${year}년 ${month}월 ${date}일`;
+            document.getElementById('eventText').value = events[selectedDateKey] || '';
+            
+            const modalTitle = document.getElementById('eventModalTitle');
+            const eventButtons = document.getElementById('eventButtons');
+            
+            if (events[selectedDateKey]) {
+                modalTitle.textContent = '일정 수정';
+                eventButtons.innerHTML = `
+                    <button type="submit" class="submit-btn">수정</button>
+                    <button type="button" class="delete-btn" onclick="deleteEvent()">삭제</button>
+                    <button type="button" class="cancel-btn" onclick="closeModal('eventModal')">취소</button>
+                `;
+            } else {
+                modalTitle.textContent = '일정 추가';
+                eventButtons.innerHTML = `
+                    <button type="submit" class="submit-btn">저장</button>
+                    <button type="button" class="cancel-btn" onclick="closeModal('eventModal')">취소</button>
+                `;
+            }
+            
+            document.getElementById('eventModal').classList.add('active');
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
         }
         
         function handleLogin(event) {
             event.preventDefault();
             const username = document.getElementById('username').value;
             alert(`${username}님 환영합니다!`);
-            closeModal();
+            closeModal('loginModal');
+        }
+        
+        function handleEvent(event) {
+            event.preventDefault();
+            const eventText = document.getElementById('eventText').value;
+            
+            if (eventText.trim()) {
+                events[selectedDateKey] = eventText.trim();
+                localStorage.setItem('calendarEvents', JSON.stringify(events));
+                renderCalendar();
+                closeModal('eventModal');
+            }
+        }
+        
+        function deleteEvent() {
+            if (confirm('이 일정을 삭제하시겠습니까?')) {
+                delete events[selectedDateKey];
+                localStorage.setItem('calendarEvents', JSON.stringify(events));
+                renderCalendar();
+                closeModal('eventModal');
+            }
         }
         
         // 모달 외부 클릭시 닫기
         document.getElementById('loginModal').addEventListener('click', function(e) {
             if (e.target === this) {
-                closeModal();
+                closeModal('loginModal');
+            }
+        });
+        
+        document.getElementById('eventModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal('eventModal');
             }
         });
         
