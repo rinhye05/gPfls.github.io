@@ -156,7 +156,7 @@
             background-color: #1a1a1a;
             color: #ffffff;
             position: relative;
-            min-height: 60px;
+            min-height: 70px;
         }
         
         .day:hover {
@@ -188,6 +188,11 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+        }
+        
+        .event-indicator.has-link {
+            text-decoration: underline;
+            cursor: pointer;
         }
         
         /* 로그인 모달 */
@@ -388,6 +393,10 @@
                     <label>일정 내용</label>
                     <textarea id="eventText" required></textarea>
                 </div>
+                <div class="form-group">
+                    <label>링크 (선택사항)</label>
+                    <input type="url" id="eventUrl" placeholder="https://example.com">
+                </div>
                 <div class="form-buttons" id="eventButtons">
                     <button type="submit" class="submit-btn">저장</button>
                     <button type="button" class="cancel-btn" onclick="closeModal('eventModal')">취소</button>
@@ -444,7 +453,14 @@
                 
                 if (events[dateKey]) {
                     dayElement.classList.add('has-event');
-                    dayElement.innerHTML += `<span class="event-indicator">${events[dateKey]}</span>`;
+                    const eventData = events[dateKey];
+                    const eventClass = eventData.url ? 'event-indicator has-link' : 'event-indicator';
+                    
+                    if (eventData.url) {
+                        dayElement.innerHTML += `<span class="${eventClass}" onclick="event.stopPropagation(); openLink('${eventData.url}')">${eventData.text}</span>`;
+                    } else {
+                        dayElement.innerHTML += `<span class="${eventClass}">${eventData.text}</span>`;
+                    }
                 }
                 
                 if (year === today.getFullYear() && 
@@ -468,6 +484,10 @@
             }
         }
         
+        function openLink(url) {
+            window.open(url, '_blank');
+        }
+        
         function previousMonth() {
             currentDate.setMonth(currentDate.getMonth() - 1);
             renderCalendar();
@@ -485,7 +505,15 @@
         function openEventModal(year, month, date) {
             selectedDateKey = `${year}-${month}-${date}`;
             document.getElementById('eventDate').value = `${year}년 ${month}월 ${date}일`;
-            document.getElementById('eventText').value = events[selectedDateKey] || '';
+            
+            const eventData = events[selectedDateKey];
+            if (eventData) {
+                document.getElementById('eventText').value = eventData.text || '';
+                document.getElementById('eventUrl').value = eventData.url || '';
+            } else {
+                document.getElementById('eventText').value = '';
+                document.getElementById('eventUrl').value = '';
+            }
             
             const modalTitle = document.getElementById('eventModalTitle');
             const eventButtons = document.getElementById('eventButtons');
@@ -522,9 +550,13 @@
         function handleEvent(event) {
             event.preventDefault();
             const eventText = document.getElementById('eventText').value;
+            const eventUrl = document.getElementById('eventUrl').value;
             
             if (eventText.trim()) {
-                events[selectedDateKey] = eventText.trim();
+                events[selectedDateKey] = {
+                    text: eventText.trim(),
+                    url: eventUrl.trim()
+                };
                 localStorage.setItem('calendarEvents', JSON.stringify(events));
                 renderCalendar();
                 closeModal('eventModal');
