@@ -211,7 +211,7 @@
             display: block;
             font-size: 10px;
             color: #5db2fd;
-            margin-top: 5px;
+            margin-top: 3px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -246,14 +246,81 @@
             padding: 40px;
             border-radius: 10px;
             border: 3px solid #5db2fd;
-            max-width: 400px;
+            max-width: 500px;
             width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
         }
         
         .modal-content h2 {
             color: #5db2fd;
             margin-bottom: 20px;
             text-align: center;
+        }
+        
+        .event-list {
+            margin-bottom: 20px;
+        }
+        
+        .event-item {
+            background-color: #0a0a0a;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #333;
+        }
+        
+        .event-item-text {
+            color: #ffffff;
+            margin-bottom: 5px;
+        }
+        
+        .event-item-link {
+            color: #5db2fd;
+            font-size: 12px;
+            text-decoration: underline;
+            cursor: pointer;
+            display: block;
+            margin-bottom: 10px;
+        }
+        
+        .event-item-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .edit-event-btn, .delete-event-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 3px;
+            font-family: 'Hack', monospace;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        
+        .edit-event-btn {
+            background-color: #5db2fd;
+            color: white;
+        }
+        
+        .edit-event-btn:hover {
+            background-color: #4a9ad4;
+        }
+        
+        .delete-event-btn {
+            background-color: #ff4444;
+            color: white;
+        }
+        
+        .delete-event-btn:hover {
+            background-color: #cc0000;
+        }
+        
+        .add-event-section {
+            border-top: 2px solid #333;
+            padding-top: 20px;
+            margin-top: 20px;
         }
         
         .form-group {
@@ -299,7 +366,7 @@
             gap: 10px;
         }
         
-        .submit-btn, .cancel-btn, .delete-btn {
+        .submit-btn, .cancel-btn {
             flex: 1;
             padding: 12px;
             border: none;
@@ -325,15 +392,6 @@
         
         .cancel-btn:hover {
             background-color: #444;
-        }
-        
-        .delete-btn {
-            background-color: #ff4444;
-            color: white;
-        }
-        
-        .delete-btn:hover {
-            background-color: #cc0000;
         }
         
         @keyframes fadeIn {
@@ -413,26 +471,55 @@
         </div>
     </div>
     
-    <!-- 일정 추가/수정 모달 -->
+    <!-- 일정 관리 모달 -->
     <div class="modal" id="eventModal">
         <div class="modal-content">
-            <h2 id="eventModalTitle">일정 추가</h2>
-            <form onsubmit="handleEvent(event)">
-                <div class="form-group">
-                    <label>날짜</label>
-                    <input type="text" id="eventDate" readonly>
-                </div>
+            <h2 id="eventModalTitle">일정 관리</h2>
+            <div class="form-group">
+                <label>날짜</label>
+                <input type="text" id="eventDate" readonly>
+            </div>
+            
+            <!-- 기존 일정 목록 -->
+            <div class="event-list" id="eventList"></div>
+            
+            <!-- 새 일정 추가 -->
+            <div class="add-event-section">
+                <h3 style="color: #5db2fd; margin-bottom: 15px; font-size: 18px;">새 일정 추가</h3>
+                <form onsubmit="handleAddEvent(event)" id="addEventForm">
+                    <div class="form-group">
+                        <label>일정 내용</label>
+                        <textarea id="newEventText" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>링크 (선택사항)</label>
+                        <input type="url" id="newEventUrl" placeholder="https://example.com">
+                    </div>
+                    <div class="form-buttons">
+                        <button type="submit" class="submit-btn">추가</button>
+                        <button type="button" class="cancel-btn" onclick="closeModal('eventModal')">닫기</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 일정 수정 모달 -->
+    <div class="modal" id="editEventModal">
+        <div class="modal-content">
+            <h2>일정 수정</h2>
+            <form onsubmit="handleEditEvent(event)" id="editEventForm">
                 <div class="form-group">
                     <label>일정 내용</label>
-                    <textarea id="eventText" required></textarea>
+                    <textarea id="editEventText" required></textarea>
                 </div>
                 <div class="form-group">
                     <label>링크 (선택사항)</label>
-                    <input type="url" id="eventUrl" placeholder="https://example.com">
+                    <input type="url" id="editEventUrl" placeholder="https://example.com">
                 </div>
-                <div class="form-buttons" id="eventButtons">
-                    <button type="submit" class="submit-btn">저장</button>
-                    <button type="button" class="cancel-btn" onclick="closeModal('eventModal')">취소</button>
+                <div class="form-buttons">
+                    <button type="submit" class="submit-btn">수정</button>
+                    <button type="button" class="cancel-btn" onclick="closeModal('editEventModal')">취소</button>
                 </div>
             </form>
         </div>
@@ -445,6 +532,7 @@
         let currentDate = new Date();
         let events = JSON.parse(localStorage.getItem('calendarEvents')) || {};
         let selectedDateKey = '';
+        let editingEventIndex = -1;
         let isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
         
         function checkLoginStatus() {
@@ -524,16 +612,17 @@
                 
                 dayElement.innerHTML = `<div>${date}</div>`;
                 
-                if (events[dateKey]) {
+                if (events[dateKey] && events[dateKey].length > 0) {
                     dayElement.classList.add('has-event');
-                    const eventData = events[dateKey];
-                    const eventClass = eventData.url ? 'event-indicator has-link' : 'event-indicator';
-                    
-                    if (eventData.url) {
-                        dayElement.innerHTML += `<span class="${eventClass}" onclick="event.stopPropagation(); openLink('${eventData.url}')">${eventData.text}</span>`;
-                    } else {
-                        dayElement.innerHTML += `<span class="${eventClass}">${eventData.text}</span>`;
-                    }
+                    events[dateKey].forEach((eventData, index) => {
+                        const eventClass = eventData.url ? 'event-indicator has-link' : 'event-indicator';
+                        
+                        if (eventData.url) {
+                            dayElement.innerHTML += `<span class="${eventClass}" onclick="event.stopPropagation(); openLink('${eventData.url}')">${eventData.text}</span>`;
+                        } else {
+                            dayElement.innerHTML += `<span class="${eventClass}">${eventData.text}</span>`;
+                        }
+                    });
                 }
                 
                 if (year === today.getFullYear() && 
@@ -586,34 +675,43 @@
             selectedDateKey = `${year}-${month}-${date}`;
             document.getElementById('eventDate').value = `${year}년 ${month}월 ${date}일`;
             
-            const eventData = events[selectedDateKey];
-            if (eventData) {
-                document.getElementById('eventText').value = eventData.text || '';
-                document.getElementById('eventUrl').value = eventData.url || '';
+            // 기존 일정 목록 표시
+            const eventList = document.getElementById('eventList');
+            eventList.innerHTML = '';
+            
+            if (events[selectedDateKey] && events[selectedDateKey].length > 0) {
+                events[selectedDateKey].forEach((eventData, index) => {
+                    const eventItem = document.createElement('div');
+                    eventItem.className = 'event-item';
+                    eventItem.innerHTML = `
+                        <div class="event-item-text">${eventData.text}</div>
+                        ${eventData.url ? `<span class="event-item-link" onclick="openLink('${eventData.url}')">${eventData.url}</span>` : ''}
+                        <div class="event-item-buttons">
+                            <button class="edit-event-btn" onclick="openEditEventModal(${index})">수정</button>
+                            <button class="delete-event-btn" onclick="deleteEvent(${index})">삭제</button>
+                        </div>
+                    `;
+                    eventList.appendChild(eventItem);
+                });
             } else {
-                document.getElementById('eventText').value = '';
-                document.getElementById('eventUrl').value = '';
+                eventList.innerHTML = '<p style="color: #666; text-align: center;">등록된 일정이 없습니다.</p>';
             }
             
-            const modalTitle = document.getElementById('eventModalTitle');
-            const eventButtons = document.getElementById('eventButtons');
-            
-            if (events[selectedDateKey]) {
-                modalTitle.textContent = '일정 수정';
-                eventButtons.innerHTML = `
-                    <button type="submit" class="submit-btn">수정</button>
-                    <button type="button" class="delete-btn" onclick="deleteEvent()">삭제</button>
-                    <button type="button" class="cancel-btn" onclick="closeModal('eventModal')">취소</button>
-                `;
-            } else {
-                modalTitle.textContent = '일정 추가';
-                eventButtons.innerHTML = `
-                    <button type="submit" class="submit-btn">저장</button>
-                    <button type="button" class="cancel-btn" onclick="closeModal('eventModal')">취소</button>
-                `;
-            }
+            // 새 일정 추가 폼 초기화
+            document.getElementById('newEventText').value = '';
+            document.getElementById('newEventUrl').value = '';
             
             document.getElementById('eventModal').classList.add('active');
+        }
+        
+        function openEditEventModal(index) {
+            editingEventIndex = index;
+            const eventData = events[selectedDateKey][index];
+            
+            document.getElementById('editEventText').value = eventData.text;
+            document.getElementById('editEventUrl').value = eventData.url || '';
+            
+            document.getElementById('editEventModal').classList.add('active');
         }
         
         function closeModal(modalId) {
@@ -644,32 +742,75 @@
             }
         }
         
-        function handleEvent(event) {
+        function handleAddEvent(event) {
             event.preventDefault();
             if (!isLoggedIn) return;
             
-            const eventText = document.getElementById('eventText').value;
-            const eventUrl = document.getElementById('eventUrl').value;
+            const eventText = document.getElementById('newEventText').value;
+            const eventUrl = document.getElementById('newEventUrl').value;
             
             if (eventText.trim()) {
-                events[selectedDateKey] = {
+                if (!events[selectedDateKey]) {
+                    events[selectedDateKey] = [];
+                }
+                
+                events[selectedDateKey].push({
                     text: eventText.trim(),
                     url: eventUrl.trim()
-                };
+                });
+                
                 localStorage.setItem('calendarEvents', JSON.stringify(events));
                 renderCalendar();
+                
+                // 모달 내용 새로고침
+                const [year, month, date] = selectedDateKey.split('-').map(Number);
                 closeModal('eventModal');
+                openEventModal(year, month, date);
             }
         }
         
-        function deleteEvent() {
+        function handleEditEvent(event) {
+            event.preventDefault();
+            if (!isLoggedIn || editingEventIndex < 0) return;
+            
+            const eventText = document.getElementById('editEventText').value;
+            const eventUrl = document.getElementById('editEventUrl').value;
+            
+            if (eventText.trim()) {
+                events[selectedDateKey][editingEventIndex] = {
+                    text: eventText.trim(),
+                    url: eventUrl.trim()
+                };
+                
+                localStorage.setItem('calendarEvents', JSON.stringify(events));
+                renderCalendar();
+                
+                closeModal('editEventModal');
+                
+                // 일정 목록 새로고침
+                const [year, month, date] = selectedDateKey.split('-').map(Number);
+                closeModal('eventModal');
+                openEventModal(year, month, date);
+            }
+        }
+        
+        function deleteEvent(index) {
             if (!isLoggedIn) return;
             
             if (confirm('이 일정을 삭제하시겠습니까?')) {
-                delete events[selectedDateKey];
+                events[selectedDateKey].splice(index, 1);
+                
+                if (events[selectedDateKey].length === 0) {
+                    delete events[selectedDateKey];
+                }
+                
                 localStorage.setItem('calendarEvents', JSON.stringify(events));
                 renderCalendar();
+                
+                // 일정 목록 새로고침
+                const [year, month, date] = selectedDateKey.split('-').map(Number);
                 closeModal('eventModal');
+                openEventModal(year, month, date);
             }
         }
         
@@ -683,6 +824,12 @@
         document.getElementById('eventModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeModal('eventModal');
+            }
+        });
+        
+        document.getElementById('editEventModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal('editEventModal');
             }
         });
         
